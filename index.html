@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Pixel Art Editor</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <style>
+        :root {
+            /* spacing */
+            --space-xs: 4px;
+            --space-sm: 8px;
+            --space-md: 16px;
+            --space-lg: 24px;
+
+            /* sizing and layout */
+            --control-size: 36px;
+            --control-radius: 10px;
+            --icon-font-size: 20px;
+
+            /* colors */
+            --color-0: #ffffff;
+            --color-1: #000000;
+            --color-2: #e57373;
+            --color-3: #f06292;
+            --color-4: #ba68c8;
+            --color-5: #7986cb;
+            --color-6: #4fc3f7;
+            --color-7: #4db6ac;
+            --color-8: #81c784;
+            --color-9: #dce775;
+            --color-10: #fff176;
+            --color-11: #ffd54f;
+            --color-12: #ffb74d;
+            --color-13: #ff8a65;
+            --color-14: #a1887f;
+            --color-15: #90a4ae;
+
+            --ui-bg: #fafafa;
+            --ui-card: #ffffff;
+            --ui-border: #d7d7d7;
+            --ui-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            --ui-hover: rgba(0, 0, 0, 0.06);
+            --ui-focus: 0 0 0 3px rgba(102, 102, 255, 0.25);
+        }
+
+        /* === Flex Utilities === */
+        .flex {
+            display: flex;
+        }
+
+        .row {
+            flex-direction: row;
+        }
+
+        .col {
+            flex-direction: column;
+        }
+
+        .flex-grow {
+            flex-grow: 1;
+        }
+
+        .flex-shrink-0 {
+            flex-shrink: 0;
+        }
+
+        .p-1 {
+            padding: var(--space-sm);
+        }
+
+        .m-1 {
+            margin: var(--space-sm);
+        }
+
+        .ml-1 {
+            margin-left: var(--space-sm);
+        }
+
+        .gap-sm {
+            gap: var(--space-sm);
+        }
+
+        /* === Widths === */
+        .w-12 {
+            width: 100%;
+        }
+
+        /* === Color Backgrounds === */
+        .bg-0 {
+            background-color: var(--color-0);
+        }
+
+        .bg-1 {
+            background-color: var(--color-1);
+        }
+
+        .bg-2 {
+            background-color: var(--color-2);
+        }
+
+        .bg-3 {
+            background-color: var(--color-3);
+        }
+
+        .bg-4 {
+            background-color: var(--color-4);
+        }
+
+        .bg-5 {
+            background-color: var(--color-5);
+        }
+
+        .bg-6 {
+            background-color: var(--color-6);
+        }
+
+        .bg-7 {
+            background-color: var(--color-7);
+        }
+
+        .bg-8 {
+            background-color: var(--color-8);
+        }
+
+        .bg-9 {
+            background-color: var(--color-9);
+        }
+
+        .bg-10 {
+            background-color: var(--color-10);
+        }
+
+        .bg-11 {
+            background-color: var(--color-11);
+        }
+
+        .bg-12 {
+            background-color: var(--color-12);
+        }
+
+        .bg-13 {
+            background-color: var(--color-13);
+        }
+
+        .bg-14 {
+            background-color: var(--color-14);
+        }
+
+        .bg-15 {
+            background-color: var(--color-15);
+        }
+
+        /* === Layout & Menu === */
+        #topRowControls {
+            display: flex;
+            flex-direction: row;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            gap: var(--space-sm);
+            padding: var(--space-sm);
+            border-bottom: 1px solid var(--ui-border);
+            background: var(--ui-bg);
+        }
+
+        #topRowControls::-webkit-scrollbar {
+            display: none;
+        }
+
+        #topRowControls {
+            scrollbar-width: none;
+        }
+
+        #topRowControls.hidden {
+            display: none;
+        }
+
+        .toolbar-card {
+            scroll-snap-align: start;
+            flex-shrink: 0;
+            background: var(--ui-card);
+            padding: var(--space-sm);
+            box-shadow: var(--ui-shadow);
+            min-width: 120px;
+        }
+
+        /* === Form Controls === */
+        /* Kontener: poziomy układ */
+        .control {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+        }
+
+        /* Ikona: stały rozmiar, bez kurczenia */
+        .control .icon {
+            flex: 0 0 var(--control-size);
+            /* nie rośnie, nie kurczy, stała szerokość */
+            width: var(--control-size);
+            height: var(--control-size);
+            border-radius: var(--control-radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: var(--icon-font-size);
+            user-select: none;
+            background: #fff;
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, .04);
+        }
+
+        /* Pole: zajmuje całą pozostałą przestrzeń */
+        .control .field {
+            flex: 1 1 auto;
+            /* rośnie i może się kurczyć */
+            min-width: 0;
+            /* ważne, by pozwolić na zawijanie/kurczenie */
+        }
+
+        /* Elementy formularza wypełniają field */
+        .control .field>.form-input {
+            width: 100%;
+            height: var(--control-size);
+            border: 1px solid var(--ui-border);
+            border-radius: var(--control-radius);
+            padding: 0 12px;
+            font-size: 14px;
+            background: #fff;
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, .04);
+        }
+
+
+        .form-input {
+            width: 100%;
+            height: var(--control-size);
+            border: 1px solid var(--ui-border);
+            padding: 0 12px;
+            font-size: 14px;
+            background: #fff;
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04);
+        }
+
+        .form-input:focus {
+            outline: none;
+            box-shadow: var(--ui-focus);
+            border-color: #6666ff;
+        }
+
+        input[type="range"].form-input {
+            padding: 0;
+        }
+
+        input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+        }
+
+        /* === Buttons === */
+        .icon-btn {
+            width: var(--control-size);
+            height: var(--control-size);
+            border-radius: var(--control-radius);
+            border: 1px solid var(--ui-border);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: var(--icon-font-size);
+            cursor: pointer;
+            transition: transform 0.06s ease, box-shadow 0.15s ease, background 0.15s ease;
+        }
+
+        .icon-btn:hover {
+            background: var(--ui-hover);
+        }
+
+        .icon-btn:active {
+            transform: translateY(1px) scale(0.98);
+        }
+
+        .icon-btn:focus-visible {
+            outline: none;
+            box-shadow: var(--ui-focus);
+        }
+
+        .btn-row {
+            display: flex;
+            gap: var(--space-sm);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="flex col w-12 p-1">
+        <div class="flex row w-12 align-center gap-sm p-1" id="topRowControls">
+
+            <!-- 📐 Grid Settings -->
+            <div class="toolbar-card">
+                <div class="control" title="Grid Width (X)">
+                    <div class="icon">↔️</div>
+                    <div class="field">
+                        <select class="form-input select" id="gridX"></select>
+                    </div>
+                </div>
+
+                <div class="control" title="Grid Height (Y)">
+                    <div class="icon">↕️</div>
+                    <div class="field">
+                        <select class="form-input select" id="gridY"></select>
+                    </div>
+                </div>
+
+                <div class="control" title="Cell Size">
+                    <div class="icon">🔲</div>
+                    <div class="field">
+                        <select class="form-input select" id="cellSize"></select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 📝 File Name & File Actions -->
+            <div class="toolbar-card" style="width: 300px">
+                <div class="control" title="Zapisane pliki">
+                    <div class="icon">📁</div>
+                    <div class="field">
+                        <select class="form-input" id="savedFiles"></select>
+                    </div>
+                </div>
+
+                <div class="control" title="Nazwa pliku">
+                    <div class="icon">📝</div>
+                    <div class="field">
+                        <input class="form-input" type="text" id="fileName" style="width: 230px"/>
+                    </div>
+                </div>
+
+                <div class="control" title="Akcje pliku">
+                    <div class="btn-row">
+                        <button id="submitFile" class="icon-btn" title="Zapisz">💾</button>
+                        <button id="deleteFile" class="icon-btn" disabled title="Usuń">❌</button>
+                        <button id="exportImageBtn" class="icon-btn" title="Zapisz jako obraz">🖼️</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 🖼️ Image Overlay -->
+            <div class="toolbar-card">
+                <div class="control" title="Załaduj obrazek">
+                    <div class="icon">🖼️</div>
+                    <div class="field">
+                        <input type="file" id="imageUpload" class="form-input" style="width: 230px"/>
+                    </div>
+                </div>
+
+                <div class="control" title="Pokaż/ukryj obrazek">
+                    <div class="icon">👁️</div>
+                    <div class="field" style="display:flex; align-items:center; gap: var(--space-sm);">
+                        <input type="checkbox" id="imageToggle" checked />
+                        <button id="imageClearBtn" class="icon-btn" title="Usuń obrazek">🗑️</button>
+                    </div>
+                </div>
+
+                <div class="control" title="Przezroczystość obrazka">
+                    <div class="icon">🌫️</div>
+                    <div class="field">
+                        <input type="range" id="imageOpacity" class="form-input" min="0" max="1" step="0.01"
+                            value="0.5" style="width: 230px"/>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex row p-1">
+            <!-- 🎨 Color Column -->
+            <div class="flex col flex-shrink-0 p-1">
+                <div class="w-12 m-1">
+                    <button id="toggleTopBarBtn" class="icon-btn"
+                        title="Pokaż/Ukryj panel górny">🎛️</button>
+                </div>
+                <div class="w-12 m-1">
+                    <button id="deletePixelsBtn" class="icon-btn" title="Usuń kolor">🧹</button>
+                </div>
+                <div class="flex col flex-shrink-0 p-1" id="colorButtons">
+
+                </div>
+            </div>
+            <div class="flex col flex-grow p-1" id="gridScrollContainer">
+                <div id="magicGridWrapper">
+                    <img id="imageOverlay" />
+                    <div id="magicGrid"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 🧠 Script -->
+    <script>
+        // === Repository of elements ===
+        const palette = [
+            '#ffffff', '#000000', '#e57373', '#f06292', '#ba68c8',
+            '#7986cb', '#4fc3f7', '#4db6ac', '#81c784', '#dce775',
+            '#fff176', '#ffd54f', '#ffb74d', '#ff8a65', '#a1887f', '#90a4ae'
+        ];
+
+        //render utilities
+
+        function generateOptionsHTML(selected, min, max, step) {
+            let html = '';
+            for (let i = min; i <= max; i += step) {
+                html += `<option value="${i}"${i === selected ? ' selected' : ''}>${i}</option>`;
+            }
+            return html;
+        }
+
+        function createCell(x, y, colorIndex = 0) {
+            const cell = document.createElement('div');
+            cell.className = `cell bg-${colorIndex}`;
+            cell.style.width = `${state.cellSize}px`;
+            cell.style.height = `${state.cellSize}px`;
+            cell.dataset.x = x;
+            cell.dataset.y = y;
+            return cell;
+        }
+
+        //ui Elements repository
+        const UI = {};
+        ["gridX", "gridY", "cellSize", "toggleTopBarBtn", "deletePixelsBtn", "colorButtons", "magicGrid",
+            "magicGridWrapper",
+            "fileName", "savedFiles", "submitFile", "deleteFile", "exportImageBtn", "imageOverlay", "imageUpload",
+            "imageClearBtn", "imageToggle", "imageOpacity"
+        ].forEach(id => {
+            UI[id] = document.getElementById(id);
+        });
+
+        //Inital Values
+        const initialGridX = 30;
+        const initialGridY = 30;
+        const initialCellSize = 30;
+
+        // === Global state ===
+        const state = {
+            gridX: initialGridX,
+            gridY: initialGridY,
+            xMax: 0,
+            yMax: 0,
+            cellSize: initialCellSize,
+            selectedColorIndex: 1,
+            drawData: [],
+            isDrawing: false,
+            image: {
+                src: '', // base64 image string
+                visible: true,
+                opacity: 0.5 // 0 to 1
+            }
+        };
+
+        // === Color buttons Click Handler (Delegated) ===
+        UI.toggleTopBarBtn.addEventListener("click", () => {
+            const bar = document.getElementById("topRowControls");
+            const isClosed = bar.classList.toggle("hidden");
+
+            UI.toggleTopBarBtn.classList.toggle("menuClosed", isClosed);
+            UI.toggleTopBarBtn.textContent = isClosed ? "🎛️" : "⏷";
+        });
+
+        UI.colorButtons.addEventListener('click', function (e) {
+            const btn = e.target.closest('.btn');
+            if (!btn || !UI.colorButtons.contains(btn)) return;
+
+            const newIndex = parseInt(btn.dataset.color);
+            if (isNaN(newIndex)) return;
+
+            // Update state
+            state.selectedColorIndex = newIndex;
+
+            // Update UI
+            const allButtons = UI.colorButtons.querySelectorAll('.btn');
+            allButtons.forEach(el => el.classList.remove('selected'));
+            btn.classList.add('selected');
+        });
+
+        function countColors() {
+            const {
+                drawData
+            } = state;
+            const count = {};
+            //initialize count object
+            palette.forEach((_, idx) => count[idx] = 0);
+            drawData.forEach(row => {
+                row.forEach(item => {
+                    if (item > 0) {
+                        count[item]++;
+                    }
+                });
+            })
+            return count;
+        }
+
+        //Render Colors
+        function renderColorButtons() {
+            const count = countColors();
+
+            // Remove old color buttons (skip any fixed buttons like delete/toggle)
+            const dynamicWrappers = UI.colorButtons.querySelectorAll('[data-color-wrapper]');
+            dynamicWrappers.forEach(node => node.remove());
+
+            palette.forEach((color, index) => {
+                const btn = document.createElement('button');
+                btn.className = `btn btnBase icon-btn bg-${index}`;
+                btn.title = `Kolor #${index}`;
+                if (index > 0) {
+                    btn.innerText = `${count[index]}`;
+                }
+                if (index === 1) {
+                    btn.style.color = 'white';
+                }
+                btn.dataset.color = index;
+                if (index === state.selectedColorIndex) btn.classList.add('selected');
+
+                const wrapper = document.createElement('div');
+                wrapper.className = 'w-12 m-1';
+                wrapper.dataset.colorWrapper = 'true'; // mark it for future cleanup
+                wrapper.appendChild(btn);
+
+                UI.colorButtons.appendChild(wrapper);
+            });
+        }
+
+
+        // === Storage Utilities ===
+
+        function getSaveName() {
+            const name = UI.fileName.value.trim();
+            return name !== "" ? name : "pixelart";
+        }
+
+        function saveToLocalStorage() {
+            const data = {
+                drawData: state.drawData,
+                gridX: state.gridX,
+                gridY: state.gridY,
+                cellSize: state.cellSize,
+                palette: palette,
+            };
+            const json = JSON.stringify(data);
+            const key = getSaveName();
+            localStorage.setItem(key, json);
+            populateSavedFileList(); // 🔁 refresh dropdown
+            UI.savedFiles.value = key;
+            alert(`Zapisano jako: ${key}`);
+        }
+
+        function removeFromLocalStorage() {
+            const key = UI.savedFiles.value;
+            if (!key) return;
+
+            const confirmDelete = confirm(`Czy na pewno chcesz usunąć rysunek "${key}"?`);
+            if (!confirmDelete) return;
+
+            localStorage.removeItem(key);
+            populateSavedFileList();
+
+            // Reset to new blank drawing
+            UI.savedFiles.value = '';
+            UI.fileName.value = '';
+            state.gridX = 30;
+            state.gridY = 30;
+            state.xMax = 0;
+            state.yMax = 0;
+            state.cellSize = 30;
+            UI.gridX.value = state.gridX;
+            UI.gridY.value = state.gridY;
+            UI.cellSize.value = state.cellSize;
+            createDrawData(state.gridX, state.gridY, true);
+            renderGrid();
+        }
+
+        function loadFromLocalStorage() {
+            const key = getSaveName();
+            const json = localStorage.getItem(key);
+            if (!json) {
+                alert(`Nie znaleziono rysunku o nazwie: ${key}`);
+                return;
+            }
+
+            try {
+                const data = JSON.parse(json);
+                state.drawData = data.drawData;
+                state.gridX = data.gridX;
+                state.gridY = data.gridY;
+                state.cellSize = data.cellSize;
+
+                // Set values into form
+                UI.gridX.value = state.gridX;
+                UI.gridY.value = state.gridY;
+                UI.cellSize.value = state.cellSize;
+
+                renderGrid();
+            } catch (err) {
+                alert("Błąd podczas wczytywania pliku.");
+                console.error(err);
+            }
+        }
+
+        function populateSavedFileList() {
+            const keys = Object.keys(localStorage).filter(k => {
+                try {
+                    const data = JSON.parse(localStorage[k]);
+                    return data?.drawData && Array.isArray(data.drawData);
+                } catch {
+                    return false;
+                }
+            });
+
+            UI.savedFiles.innerHTML = '';
+            const emptyOption = document.createElement('option');
+            emptyOption.value = '';
+            emptyOption.textContent = '➕ Nowy obrazek';
+            UI.savedFiles.appendChild(emptyOption);
+
+            keys.forEach(key => {
+                const opt = document.createElement('option');
+                opt.value = key;
+                opt.textContent = key;
+                UI.savedFiles.appendChild(opt);
+            });
+        }
+
+        //Form controls
+        function handleGridResize() {
+            createDrawData(state.gridX, state.gridY); //update limits
+            const newX = parseInt(UI.gridX.value, 10);
+            const newY = parseInt(UI.gridY.value, 10);
+            if (newX < state.xMax || newY < state.yMax) {
+                const answer = prompt(
+                    'Grid is smaller than image, change will cause image trim / cut from right / bottom. Prompt "y" if you want to change ?'
+                );
+                if (answer === 'y') {
+                    state.gridX = newX;
+                    state.gridY = newY;
+                    createDrawData(state.gridX, state.gridY);
+                    renderGrid();
+                } else {
+                    UI.gridX.value = state.gridX;
+                    UI.gridY.value = state.gridY;
+                }
+            } else {
+                state.gridX = newX;
+                state.gridY = newY;
+                createDrawData(state.gridX, state.gridY);
+                renderGrid();
+            }
+        }
+
+        //Drawing
+        function handleDrawStart(e) {
+            const elem = e.target.closest('.cell');
+            if (!elem) return;
+
+            state.isDrawing = true;
+            handleDraw(e);
+        }
+
+        function handleDrawEnd(e) {
+            state.isDrawing = false;
+        }
+
+        function handleDraw(e) {
+            const elem = e.target.closest('.cell');
+            if (!elem || !state.isDrawing) return;
+
+            const x = parseInt(elem.dataset.x, 10);
+            const y = parseInt(elem.dataset.y, 10);
+
+            if (isNaN(x) || isNaN(y)) return;
+
+            // Update draw data and element
+            if (state.drawData[y][x] === state.selectedColorIndex) {
+                state.drawData[y][x] = 0;
+                elem.dataset.color = 0;
+                elem.className = `cell bg-${0}`;
+            } else {
+                state.drawData[y][x] = state.selectedColorIndex;
+                elem.dataset.color = state.selectedColorIndex;
+                elem.className = `cell bg-${state.selectedColorIndex}`;
+            }
+            renderColorButtons();
+        }
+
+        //Deleting
+        function handleDeletePixels() {
+            const selected = state.selectedColorIndex;
+
+            const confirmClear = selected === 0 ?
+                confirm("Czy na pewno chcesz usunąć wszystko?") :
+                true;
+
+            if (!confirmClear) return;
+
+            for (let y = 0; y < state.gridY; y++) {
+                for (let x = 0; x < state.gridX; x++) {
+                    if (selected === 0 || state.drawData[y][x] === selected) {
+                        state.drawData[y][x] = 0;
+                    }
+                }
+            }
+            state.xMax = 0;
+            state.yMax = 0;
+            renderGrid();
+            renderColorButtons();
+        }
+
+        //export
+        function exportGridAsImage() {
+            const canvas = document.createElement("canvas");
+            canvas.width = state.gridX * state.cellSize;
+            canvas.height = state.gridY * state.cellSize;
+
+            const ctx = canvas.getContext("2d");
+
+            for (let y = 0; y < state.gridY; y++) {
+                for (let x = 0; x < state.gridX; x++) {
+                    const colorIndex = state.drawData[y][x];
+                    const color = palette[colorIndex] || "#ffffff";
+                    ctx.fillStyle = color;
+                    ctx.fillRect(
+                        x * state.cellSize,
+                        y * state.cellSize,
+                        state.cellSize,
+                        state.cellSize
+                    );
+                }
+            }
+
+            const dataURL = canvas.toDataURL("image/jpeg", 1.0); // high quality
+
+            const a = document.createElement("a");
+            a.href = dataURL;
+            a.download = `${getSaveName()}.jpg`;
+            a.click();
+        }
+
+        //Image overlay control
+        function handleImageUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function (event) {
+                state.image.src = event.target.result;
+                updateImageOverlay();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function handleImageDelete(e) {
+            state.image = {
+                src: '',
+                visible: true,
+                opacity: 0.5
+            }
+            updateImageOverlay();
+        }
+
+        function updateImageOverlay() {
+            const img = UI.imageOverlay;
+            img.src = state.image.src;
+            img.style.display = state.image.visible ? 'block' : 'none';
+            img.style.position = 'absolute';
+            img.style.opacity = state.image.opacity;
+            img.style.pointerEvents = 'none'; // allow drawing through
+            img.style.zIndex = '0';
+            img.style.imageRendering = 'pixelated';
+            img.style.width = `${state.gridX * state.cellSize}px`;
+            img.style.height = 'auto'; // maintain aspect ratio
+        }
+
+        function toggleImageVisibility() {
+            state.image.visible = UI.imageToggle.checked;
+            updateImageOverlay();
+        }
+
+        function setImageOpacity(value) {
+            state.image.opacity = parseFloat(value);
+            updateImageOverlay();
+        }
+
+        //Event binding
+        UI.gridX.addEventListener('input', handleGridResize);
+        UI.gridY.addEventListener('input', handleGridResize);
+        UI.cellSize.addEventListener('input', handleGridResize);
+        UI.magicGrid.addEventListener('mousedown', handleDrawStart);
+        document.addEventListener('mouseup', handleDrawEnd);
+        UI.magicGrid.addEventListener('mouseover', handleDraw);
+        UI.deletePixelsBtn.addEventListener('click', handleDeletePixels);
+        UI.savedFiles.addEventListener('change', () => {
+            const selected = UI.savedFiles.value;
+            if (selected === '') {
+                // New file: reset state
+                UI.fileName.value = '';
+                state.gridX = initialGridX;
+                state.gridY = initialGridY;
+                state.cellSize = initialCellSize;
+                UI.gridX.value = state.gridX;
+                UI.gridY.value = state.gridY;
+                UI.cellSize.value = state.cellSize;
+                UI.deleteFile.disabled = true;
+                createDrawData(state.gridX, state.gridY, true);
+                renderGrid();
+                return;
+            }
+
+            // Load selected file
+            UI.fileName.value = selected;
+            UI.deleteFile.disabled = false;
+            loadFromLocalStorage();
+        });
+        UI.submitFile.addEventListener('click', saveToLocalStorage);
+        UI.deleteFile.addEventListener('click', removeFromLocalStorage);
+        UI.exportImageBtn.addEventListener('click', exportGridAsImage);
+        UI.imageUpload.addEventListener('change', handleImageUpload);
+        UI.imageClearBtn.addEventListener('click', handleImageDelete);
+        UI.imageToggle.addEventListener('change', toggleImageVisibility);
+        UI.imageOpacity.addEventListener('input', (e) => setImageOpacity(e.target.value));
+        //Grid controls       
+
+        function createDrawData(newWidth, newHeight, initial = false) {
+            const newData = [];
+            let xMax = 0,
+                yMax = 0;
+
+            for (let y = 0; y < newHeight; y++) {
+                const row = [];
+                for (let x = 0; x < newWidth; x++) {
+                    const value = initial ? 0 : (state.drawData[y]?.[x] ?? 0);
+                    row.push(value);
+                    if (value > 0) {
+                        if (value > 0) {
+                            xMax = Math.max(xMax, x);
+                            yMax = Math.max(yMax, y);
+                        }
+                    }
+                }
+                newData.push(row);
+            }
+
+            state.drawData = newData;
+            //update max metrics
+            state.xMax = xMax;
+            state.yMax = yMax;
+
+            console.log("xMax:", xMax, "yMax:", yMax);
+        }
+
+        function renderGrid() {
+            UI.magicGrid.innerHTML = '';
+            if (!state.drawData) {
+                UI.magicGrid.innerHTML = `<p>No Draw Data</p>`;
+                return;
+            }
+            let h = "";
+            state.drawData.forEach((row, rowIdx) => {
+                h += `<div class="flex row">`;
+                row.forEach((cell, cellIdx) => {
+                    const isFirstCol = cellIdx === 0;
+                    const isFirstRow = rowIdx === 0;
+                    const isLastCol = cellIdx === state.gridX - 1;
+                    const isLastRow = rowIdx === state.gridY - 1;
+
+                    let style = `
+                        width: ${state.cellSize}px;
+                        height: ${state.cellSize}px;
+                        box-sizing: border-box;
+                        border-top: ${isFirstRow ? '1px' : '0'} solid darkgray;
+                        border-left: ${isFirstCol ? '1px' : '0'} solid darkgray;
+                        border-right: ${isLastCol ? '1px' : '1px'} solid darkgray;
+                        border-bottom: ${isLastRow ? '1px' : '1px'} solid darkgray;
+                    `;
+
+                    h += `<div 
+                        class="cell bg-${cell}" 
+                        style="${style}" 
+                        data-x="${cellIdx}" 
+                        data-y="${rowIdx}" 
+                        data-color="${cell}">
+                    </div>`;
+                });
+
+                h += `</div>`;
+            });
+
+            UI.magicGrid.innerHTML = h;
+            updateImageOverlay();
+            renderColorButtons();
+        }
+
+        function init() {
+            // Generate dynamic select options
+            UI.gridX.innerHTML = generateOptionsHTML(state.gridX, 5, 100, 5);
+            UI.gridY.innerHTML = generateOptionsHTML(state.gridY, 5, 100, 5);
+            UI.cellSize.innerHTML = generateOptionsHTML(state.cellSize, 5, 50, 5);
+
+            renderColorButtons();
+            createDrawData(state.gridX, state.gridY);
+            renderGrid();
+            populateSavedFileList();
+        }
+
+        init();
+    </script>
+</body>
+
+</html>
