@@ -17,7 +17,7 @@ A lightweight, self-contained pixel art editor built with vanilla JavaScript, HT
 Just open `index.html` in your browser – no installation required.  
 Or view the live demo via **GitHub Pages**:
 
-👉 [https://github.com/stiffelbo/pixelEditor](https://github.com/stiffelbo/pixelEditor)
+👉 [https://github.com/stiffelbo/pixelEditor](https://stiffelbo.github.io/pixelEditor/)
 
 ## 📂 Folder structure
 
